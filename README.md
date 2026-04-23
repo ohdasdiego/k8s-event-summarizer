@@ -10,8 +10,6 @@ A production-grade Kubernetes cluster monitoring dashboard with AI-powered healt
 
 🔗 **[k8s.ado-runner.com](https://k8s.ado-runner.com)**
 
-![K8s Event Summarizer Dashboard](screenshots/dashboard.jpg)
-
 ---
 
 ## What It Does
