@@ -159,6 +159,7 @@ kubectl run starved-pod --image=nginx \
 | `GET /` | Live dashboard UI |
 | `GET /api/cluster` | Full cluster state — nodes, pods, deployments, warning events |
 | `GET /api/summarize` | On-demand Claude AI health digest |
+| `GET /api/health` | Liveness probe — cluster connectivity check |
 
 ---
 

@@ -167,6 +167,15 @@ def index():
     return render_template("index.html")
 
 
+@app.route("/api/health")
+def health():
+    try:
+        v1.list_node(_request_timeout=5)
+        return jsonify({"status": "ok", "cluster": "connected"})
+    except Exception as e:
+        return jsonify({"status": "degraded", "cluster": "unreachable", "error": str(e)}), 503
+
+
 @app.route("/api/cluster")
 def cluster_data():
     try:
