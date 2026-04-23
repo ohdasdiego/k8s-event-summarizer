@@ -1,7 +1,7 @@
 let allPods = [];
 let currentFilter = 'all';
 
-const DIGEST_BTN_LABEL = '⚡ Health Digest';
+const DIGEST_BTN_LABEL = 'Cluster Report';
 
 async function loadClusterData() {
   const btn = document.getElementById('refresh-btn');
@@ -34,7 +34,7 @@ async function getDigest() {
   const panel = document.getElementById('digest-panel');
   const body  = document.getElementById('digest-body');
 
-  btn.textContent = '⚡ Analyzing…';
+  btn.textContent = 'Analyzing…';
   btn.disabled = true;
   panel.style.display = 'block';
   body.textContent = 'Analyzing cluster state…';
