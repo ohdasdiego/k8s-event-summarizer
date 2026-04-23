@@ -9,7 +9,7 @@ async function loadClusterData() {
   btn.disabled = true;
 
   try {
-    const res = await fetch('/api/cluster');
+    const res = await fetch('/api/cluster?_=' + Date.now());
     const data = await res.json();
     if (data.error) throw new Error(data.error);
 
@@ -40,7 +40,7 @@ async function getDigest() {
   body.textContent = 'Analyzing cluster state…';
 
   try {
-    const res  = await fetch('/api/summarize');
+    const res  = await fetch('/api/summarize?_=' + Date.now());
     const data = await res.json();
     if (data.error) throw new Error(data.error);
     body.textContent = data.summary;

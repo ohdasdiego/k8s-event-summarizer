@@ -1,4 +1,4 @@
-from flask import Flask, render_template, jsonify
+from flask import Flask, render_template, jsonify, request
 from kubernetes import client, config
 import anthropic
 import os
@@ -6,6 +6,15 @@ from datetime import datetime, timezone
 from collections import defaultdict
 
 app = Flask(__name__)
+
+# Prevent browser caching of API responses
+@app.after_request
+def no_cache(response):
+    if request.path.startswith("/api/"):
+        response.headers["Cache-Control"] = "no-store, no-cache, must-revalidate, max-age=0"
+        response.headers["Pragma"] = "no-cache"
+        response.headers["Expires"] = "0"
+    return response
 
 # Load kubeconfig
 try:
