@@ -1,0 +1,14 @@
+[Unit]
+Description=K8s Event Summarizer
+After=network.target
+
+[Service]
+User=claw
+WorkingDirectory=/home/claw/Projects/k8s-event-summarizer
+EnvironmentFile=/home/claw/Projects/k8s-event-summarizer/.env
+ExecStart=/home/claw/Projects/k8s-event-summarizer/venv/bin/gunicorn --workers 1 --bind 127.0.0.1:5003 app:app
+Restart=always
+RestartSec=5
+
+[Install]
+WantedBy=multi-user.target

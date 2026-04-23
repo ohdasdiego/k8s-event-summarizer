@@ -1,0 +1,540 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>K8s Cluster Monitor</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg:           #111111;
+      --panel:        #181818;
+      --card:         #1f1f1f;
+      --border:       #2a2a2a;
+      --border2:      #333333;
+      --orange:       #ff6b00;
+      --orange2:      #ff8c00;
+      --orange-dim:   rgba(255,107,0,0.12);
+      --orange-glow:  rgba(255,107,0,0.25);
+      --green:        #73bf69;
+      --yellow:       #f5a623;
+      --red:          #f2495c;
+      --text:         #d9d9d9;
+      --muted:        #686868;
+      --muted2:       #888888;
+      --font:         'Inter', 'Segoe UI', system-ui, sans-serif;
+      --mono:         'JetBrains Mono', 'Fira Code', 'Courier New', monospace;
+    }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: var(--font);
+      font-size: 13px;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+
+    /* ── Header ── */
+    header {
+      background: var(--panel);
+      border-bottom: 1px solid var(--border);
+      padding: 0 1.5rem;
+      height: 48px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      position: sticky;
+      top: 0;
+      z-index: 10;
+    }
+
+    .logo {
+      display: flex;
+      align-items: center;
+      gap: 0.6rem;
+    }
+
+    .logo-icon {
+      width: 28px; height: 28px;
+      background: var(--orange);
+      border-radius: 5px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 0.9rem;
+      box-shadow: 0 0 10px var(--orange-glow);
+    }
+
+    .logo h1 {
+      font-size: 0.95rem;
+      font-weight: 600;
+      letter-spacing: 0.01em;
+      color: var(--text);
+    }
+
+    .logo h1 span {
+      color: var(--orange);
+    }
+
+    .header-right {
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+    }
+
+    .last-updated {
+      font-size: 0.72rem;
+      color: var(--muted);
+      font-family: var(--mono);
+    }
+
+    .live-dot {
+      display: flex;
+      align-items: center;
+      gap: 0.35rem;
+      font-size: 0.68rem;
+      color: var(--muted2);
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+    }
+
+    .live-dot::before {
+      content: '';
+      width: 6px; height: 6px;
+      border-radius: 50%;
+      background: var(--orange);
+      box-shadow: 0 0 6px var(--orange);
+      animation: blink 2s ease-in-out infinite;
+    }
+
+    @keyframes blink { 0%,100%{opacity:1} 50%{opacity:0.3} }
+
+    button {
+      font-family: var(--mono);
+      font-size: 0.72rem;
+      padding: 0.3rem 0.8rem;
+      border-radius: 3px;
+      border: 1px solid var(--border2);
+      cursor: pointer;
+      letter-spacing: 0.04em;
+      transition: all 0.15s;
+    }
+
+    .btn-digest {
+      background: var(--orange);
+      color: #000;
+      font-weight: 700;
+      border-color: var(--orange);
+    }
+    .btn-digest:hover { background: var(--orange2); border-color: var(--orange2); }
+    .btn-digest:disabled { opacity: 0.5; cursor: not-allowed; }
+
+    .btn-refresh {
+      background: transparent;
+      color: var(--muted2);
+    }
+    .btn-refresh:hover { border-color: var(--orange); color: var(--orange); }
+
+    /* ── Main Layout ── */
+    main {
+      flex: 1;
+      padding: 1.25rem 1.5rem;
+      max-width: 1500px;
+      width: 100%;
+      margin: 0 auto;
+    }
+
+    .section-label {
+      font-size: 0.68rem;
+      font-weight: 600;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: var(--muted);
+      margin-bottom: 0.6rem;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    .section-label::after {
+      content: '';
+      flex: 1;
+      height: 1px;
+      background: var(--border);
+    }
+
+    /* ── Health Digest Panel ── */
+    .ai-panel {
+      background: var(--panel);
+      border: 1px solid var(--border);
+      border-left: 2px solid var(--orange);
+      border-radius: 4px;
+      padding: 1rem 1.25rem;
+      margin-bottom: 1.25rem;
+    }
+
+    .ai-panel-header {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      margin-bottom: 0.6rem;
+    }
+
+    .ai-tag {
+      font-size: 0.62rem;
+      font-weight: 700;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: var(--orange);
+      background: var(--orange-dim);
+      border: 1px solid rgba(255,107,0,0.2);
+      padding: 0.15rem 0.45rem;
+      border-radius: 3px;
+      font-family: var(--mono);
+    }
+
+    .digest-ts {
+      font-size: 0.68rem;
+      color: var(--muted);
+      font-family: var(--mono);
+    }
+
+    .digest-body {
+      font-size: 0.82rem;
+      color: var(--text);
+      line-height: 1.7;
+      font-family: var(--mono);
+      white-space: pre-wrap;
+    }
+
+    /* ── Stats Row ── */
+    .stats-row {
+      display: grid;
+      grid-template-columns: repeat(5, 1fr);
+      gap: 0.75rem;
+      margin-bottom: 1.25rem;
+    }
+
+    .stat-card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 4px;
+      padding: 1rem 1.1rem;
+      position: relative;
+      overflow: hidden;
+      transition: border-color 0.2s;
+    }
+
+    .stat-card::before {
+      content: '';
+      position: absolute;
+      top: 0; left: 0; right: 0;
+      height: 2px;
+      background: var(--orange);
+      opacity: 0;
+      transition: opacity 0.2s;
+    }
+
+    .stat-card.warn::before { opacity: 1; background: var(--red); }
+    .stat-card.ok::before   { opacity: 1; background: var(--green); }
+
+    .stat-label {
+      font-size: 0.67rem;
+      font-weight: 600;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: var(--muted);
+      margin-bottom: 0.4rem;
+      font-family: var(--mono);
+    }
+
+    .stat-value {
+      font-size: 2rem;
+      font-weight: 700;
+      line-height: 1;
+      font-family: var(--mono);
+      font-variant-numeric: tabular-nums;
+    }
+
+    .stat-value.neutral { color: var(--orange2); }
+    .stat-value.ok      { color: var(--green); }
+    .stat-value.warn    { color: var(--red); }
+
+    /* ── Grid ── */
+    .grid-2col {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 0.75rem;
+    }
+
+    /* ── Table Cards ── */
+    .table-card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 4px;
+      overflow: hidden;
+    }
+
+    .card-header {
+      display: flex;
+      align-items: center;
+      gap: 0.6rem;
+      padding: 0.6rem 1rem;
+      background: var(--panel);
+      border-bottom: 1px solid var(--border);
+    }
+
+    .card-title {
+      font-size: 0.67rem;
+      font-weight: 600;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: var(--muted);
+      font-family: var(--mono);
+      flex: 1;
+    }
+
+    .card-count {
+      font-size: 0.67rem;
+      color: var(--muted);
+      background: var(--bg);
+      border: 1px solid var(--border);
+      padding: 0.1rem 0.5rem;
+      border-radius: 3px;
+      font-family: var(--mono);
+    }
+
+    .filter-tabs {
+      display: flex;
+      gap: 0.3rem;
+      margin-left: auto;
+    }
+
+    .tab {
+      font-size: 0.67rem;
+      padding: 0.15rem 0.6rem;
+      background: transparent;
+      border: 1px solid var(--border);
+      color: var(--muted);
+      border-radius: 3px;
+      cursor: pointer;
+      letter-spacing: 0.02em;
+      font-family: var(--mono);
+      transition: all 0.15s;
+    }
+
+    .tab.active { border-color: var(--orange); color: var(--orange); background: var(--orange-dim); }
+    .tab:hover  { border-color: var(--border2); color: var(--text); }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+    }
+
+    thead th {
+      font-family: var(--mono);
+      font-size: 0.65rem;
+      font-weight: 700;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: var(--muted);
+      padding: 0.5rem 1rem;
+      text-align: left;
+      border-bottom: 1px solid var(--border);
+      background: rgba(0,0,0,0.2);
+    }
+
+    tbody tr {
+      border-bottom: 1px solid var(--border);
+      transition: background 0.1s;
+    }
+
+    tbody tr:last-child { border-bottom: none; }
+    tbody tr:hover { background: rgba(255,255,255,0.02); }
+
+    tbody td {
+      padding: 0.55rem 1rem;
+      font-family: var(--mono);
+      font-size: 0.75rem;
+      vertical-align: middle;
+      color: var(--text);
+    }
+
+    .td-muted  { color: var(--muted2); }
+    .td-name   { color: var(--text); }
+    .td-msg    { color: var(--muted2); max-width: 380px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 0.72rem; }
+
+    /* ── Status Badges ── */
+    .badge {
+      display: inline-block;
+      padding: 0.15rem 0.5rem;
+      font-size: 0.65rem;
+      font-family: var(--mono);
+      font-weight: 700;
+      letter-spacing: 0.06em;
+      border-radius: 3px;
+      border: 1px solid transparent;
+    }
+
+    .badge-green  { color: var(--green);   border-color: rgba(115,191,105,0.3); background: rgba(115,191,105,0.08); }
+    .badge-red    { color: var(--red);     border-color: rgba(242,73,92,0.3);   background: rgba(242,73,92,0.08); }
+    .badge-yellow { color: var(--yellow);  border-color: rgba(245,166,35,0.3);  background: rgba(245,166,35,0.08); }
+    .badge-orange { color: var(--orange2); border-color: rgba(255,107,0,0.3);   background: var(--orange-dim); }
+    .badge-dim    { color: var(--muted2);  border-color: var(--border); }
+
+    /* ── Empty / Loading ── */
+    .empty-row {
+      text-align: center;
+      padding: 1.5rem !important;
+      color: var(--muted);
+      font-family: var(--mono);
+      font-size: 0.72rem;
+    }
+
+    /* ── Footer ── */
+    footer {
+      text-align: center;
+      padding: 0.75rem;
+      font-size: 0.68rem;
+      color: var(--muted);
+      border-top: 1px solid var(--border);
+      font-family: var(--mono);
+      margin-top: 1.5rem;
+    }
+
+    footer a { color: var(--orange); text-decoration: none; opacity: 0.8; }
+    footer a:hover { opacity: 1; }
+
+    @media (max-width: 900px) {
+      .grid-2col { grid-template-columns: 1fr; }
+      .stats-row { grid-template-columns: repeat(3, 1fr); }
+    }
+
+    @media (max-width: 600px) {
+      .stats-row { grid-template-columns: 1fr 1fr; }
+    }
+  </style>
+</head>
+<body>
+
+<header>
+  <div class="logo">
+    <div class="logo-icon">⬡</div>
+    <h1>K8s <span>Monitor</span></h1>
+  </div>
+  <div class="header-right">
+    <span class="live-dot">Live</span>
+    <span class="last-updated" id="last-updated">—</span>
+    <button class="btn-digest" id="digest-btn" onclick="getDigest()">⚡ Health Digest</button>
+    <button class="btn-refresh" id="refresh-btn" onclick="loadClusterData()">↻ Refresh</button>
+  </div>
+</header>
+
+<main>
+
+  <!-- Health Digest Panel -->
+  <div id="digest-panel" style="display:none">
+    <div class="section-label">Health Digest</div>
+    <div class="ai-panel">
+      <div class="ai-panel-header">
+        <span class="ai-tag">NOC Analysis</span>
+        <span class="digest-ts" id="digest-ts"></span>
+      </div>
+      <div class="digest-body" id="digest-body"></div>
+    </div>
+  </div>
+
+  <!-- Stats Row -->
+  <div class="section-label">Cluster Overview</div>
+  <div class="stats-row">
+    <div class="stat-card" id="stat-nodes">
+      <div class="stat-label">Nodes Ready</div>
+      <div class="stat-value neutral">--</div>
+    </div>
+    <div class="stat-card" id="stat-pods-running">
+      <div class="stat-label">Pods Running</div>
+      <div class="stat-value neutral">--</div>
+    </div>
+    <div class="stat-card" id="stat-pods-warn">
+      <div class="stat-label">Pods Unhealthy</div>
+      <div class="stat-value neutral">--</div>
+    </div>
+    <div class="stat-card" id="stat-deployments">
+      <div class="stat-label">Deployments Healthy</div>
+      <div class="stat-value neutral">--</div>
+    </div>
+    <div class="stat-card" id="stat-events">
+      <div class="stat-label">Warning Events</div>
+      <div class="stat-value neutral">--</div>
+    </div>
+  </div>
+
+  <!-- Nodes + Deployments -->
+  <div class="grid-2col">
+
+    <div class="table-card">
+      <div class="card-header">
+        <span class="card-title">Nodes</span>
+        <span class="card-count" id="node-count">0</span>
+      </div>
+      <table>
+        <thead><tr><th>Name</th><th>Status</th><th>CPU</th><th>Memory</th><th>Version</th><th>Age</th></tr></thead>
+        <tbody id="nodes-tbody"><tr><td colspan="6" class="empty-row">Loading…</td></tr></tbody>
+      </table>
+    </div>
+
+    <div class="table-card">
+      <div class="card-header">
+        <span class="card-title">Deployments</span>
+        <span class="card-count" id="deploy-count">0</span>
+      </div>
+      <table>
+        <thead><tr><th>Name</th><th>Namespace</th><th>Replicas</th><th>Status</th><th>Age</th></tr></thead>
+        <tbody id="deployments-tbody"><tr><td colspan="5" class="empty-row">Loading…</td></tr></tbody>
+      </table>
+    </div>
+
+  </div>
+
+  <!-- Pods -->
+  <div class="section-label" style="margin-top:1.25rem">Pods</div>
+  <div class="table-card">
+    <div class="card-header">
+      <span class="card-title">All Namespaces</span>
+      <span class="card-count" id="pod-count">0</span>
+      <div class="filter-tabs">
+        <button class="tab active" onclick="filterPods('all', this)">All</button>
+        <button class="tab" onclick="filterPods('warn', this)">Unhealthy</button>
+        <button class="tab" onclick="filterPods('default', this)">Default NS</button>
+      </div>
+    </div>
+    <table>
+      <thead><tr><th>Name</th><th>Namespace</th><th>Status</th><th>Restarts</th><th>Age</th></tr></thead>
+      <tbody id="pods-tbody"><tr><td colspan="5" class="empty-row">Loading…</td></tr></tbody>
+    </table>
+  </div>
+
+  <!-- Warning Events -->
+  <div class="section-label" style="margin-top:1.25rem">Warning Events</div>
+  <div class="table-card">
+    <div class="card-header">
+      <span class="card-title">Recent Warnings</span>
+      <span class="card-count" id="event-count">0</span>
+    </div>
+    <table>
+      <thead><tr><th>Object</th><th>Reason</th><th>Message</th><th>Count</th><th>Last Seen</th></tr></thead>
+      <tbody id="events-tbody"><tr><td colspan="5" class="empty-row">Loading…</td></tr></tbody>
+    </table>
+  </div>
+
+</main>
+
+<footer>
+  <a href="https://github.com/ohdasdiego" target="_blank">ohdasdiego</a> ·
+  <a href="https://github.com/ohdasdiego/k8s-event-summarizer" target="_blank">GitHub</a>
+</footer>
+
+<script src="/static/js/main.js"></script>
+</body>
+</html>
