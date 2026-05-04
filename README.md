@@ -8,7 +8,7 @@ A production-grade Kubernetes cluster monitoring dashboard with AI-powered healt
 
 ## Live Demo
 
-🔗 **[k8s.ado-runner.com](https://k8s.ado-runner.com)**
+ **[k8s.ado-runner.com](https://k8s.ado-runner.com)**
 
 ---
 
@@ -34,7 +34,7 @@ A Flask app connects to a live Kubernetes cluster via the Python `kubernetes` cl
 ### Dashboard Stats (healthy cluster)
 
 ```
-Nodes Ready: 1/1   Pods Running: 4   Pods Unhealthy: 3   Deployments: 3/5   Warning Events: 8
+Nodes Ready: 1/1 Pods Running: 4 Pods Unhealthy: 3 Deployments: 3/5 Warning Events: 8
 ```
 
 ### AI Health Digest
@@ -55,28 +55,28 @@ and either reduce starved-pod's memory request or add a larger node to the clust
 
 ```json
 {
-  "nodes": [
-    {
-      "name": "k3s-node-1",
-      "status": "Ready",
-      "cpu": "2",
-      "memory": "3882756Ki",
-      "version": "v1.28.7+k3s1",
-      "age": "2d"
-    }
-  ],
-  "pods": [
-    { "name": "nginx-xxx", "namespace": "default", "status": "Running", "restarts": 0, "age": "2d" },
-    { "name": "crashloop-demo-xxx", "namespace": "default", "status": "CrashLoopBackOff", "restarts": 47, "age": "1h" }
-  ],
-  "deployments": [
-    { "name": "nginx", "namespace": "default", "desired": 1, "ready": 1, "healthy": true, "age": "2d" },
-    { "name": "broken-app", "namespace": "default", "desired": 1, "ready": 0, "healthy": false, "age": "1h" }
-  ],
-  "events": [
-    { "namespace": "default", "reason": "BackOff", "message": "Back-off pulling image nginx:doesnotexist", "object": "Pod/broken-app-xxx", "count": 12, "last_seen": "2m" }
-  ],
-  "last_updated": "2026-04-23 19:00:00 UTC"
+ "nodes": [
+ {
+ "name": "k3s-node-1",
+ "status": "Ready",
+ "cpu": "2",
+ "memory": "3882756Ki",
+ "version": "v1.28.7+k3s1",
+ "age": "2d"
+ }
+ ],
+ "pods": [
+ { "name": "nginx-xxx", "namespace": "default", "status": "Running", "restarts": 0, "age": "2d" },
+ { "name": "crashloop-demo-xxx", "namespace": "default", "status": "CrashLoopBackOff", "restarts": 47, "age": "1h" }
+ ],
+ "deployments": [
+ { "name": "nginx", "namespace": "default", "desired": 1, "ready": 1, "healthy": true, "age": "2d" },
+ { "name": "broken-app", "namespace": "default", "desired": 1, "ready": 0, "healthy": false, "age": "1h" }
+ ],
+ "events": [
+ { "namespace": "default", "reason": "BackOff", "message": "Back-off pulling image nginx:doesnotexist", "object": "Pod/broken-app-xxx", "count": 12, "last_seen": "2m" }
+ ],
+ "last_updated": "2026-04-23 19:00:00 UTC"
 }
 ```
 
@@ -84,7 +84,7 @@ and either reduce starved-pod's memory request or add a larger node to the clust
 
 ```json
 {
-  "summary": "Overall Status: DEGRADED — 3 of 5 deployments are unhealthy with active crash loops.\n\nIssues:\n- broken-app: ImagePullBackOff...\n\nRecommendation: Fix the broken image tag..."
+ "summary": "Overall Status: DEGRADED — 3 of 5 deployments are unhealthy with active crash loops.\n\nIssues:\n- broken-app: ImagePullBackOff...\n\nRecommendation: Fix the broken image tag..."
 }
 ```
 
@@ -94,14 +94,14 @@ and either reduce starved-pod's memory request or add a larger node to the clust
 
 ```
 Civo k3s Cluster (remote)
-        │
-        │  kubernetes Python client (kubeconfig)
-        ▼
+ │
+ │ kubernetes Python client (kubeconfig)
+ ▼
 VPS (Flask + Gunicorn, port 5003) ──→ Anthropic API (Claude Haiku)
-        │
-        │  Nginx reverse proxy
-        ▼
-  k8s.ado-runner.com (Cloudflare SSL)
+ │
+ │ Nginx reverse proxy
+ ▼
+ k8s.ado-runner.com (Cloudflare SSL)
 ```
 
 **Key design decisions:**
@@ -119,9 +119,9 @@ The Civo cluster runs a mix of healthy and intentionally broken workloads to gen
 
 | Workload | Status | Purpose |
 |---|---|---|
-| `nginx` | Running ✅ | Healthy baseline |
-| `broken-app` | ImagePullBackOff ❌ | Bad image tag (`nginx:doesnotexist`) |
-| `crashloop-demo` | CrashLoopBackOff ❌ | Exits immediately on startup |
+| `nginx` | Running | Healthy baseline |
+| `broken-app` | ImagePullBackOff | Bad image tag (`nginx:doesnotexist`) |
+| `crashloop-demo` | CrashLoopBackOff | Exits immediately on startup |
 | `starved-pod` | Pending ⏳ | Requests 2Gi on a node with ~1.8Gi allocatable |
 
 Deploy them:
@@ -131,7 +131,7 @@ kubectl create deployment nginx --image=nginx
 kubectl create deployment broken-app --image=nginx:doesnotexist
 kubectl create deployment crashloop-demo --image=busybox -- /bin/sh -c 'exit 1'
 kubectl run starved-pod --image=nginx \
-  --overrides='{"spec":{"containers":[{"name":"starved-pod","image":"nginx","resources":{"requests":{"memory":"2Gi"}}}]}}'
+ --overrides='{"spec":{"containers":[{"name":"starved-pod","image":"nginx","resources":{"requests":{"memory":"2Gi"}}}]}}'
 ```
 
 ---
@@ -250,7 +250,7 @@ This project is intentionally production-aligned — not a local toy:
 
 ---
 
-## 🗺️ Roadmap
+## Roadmap
 
 - [ ] Multi-namespace filtering — scope views to specific namespaces
 - [ ] Scheduled auto-digest — configurable interval with history panel
